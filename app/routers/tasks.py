@@ -3,7 +3,7 @@ from typing import List
 from datetime import datetime
 import uuid
 
-from app.models import Task, TaskCreate
+from app.models import Task, TaskCreate, TaskPatch
 from app.database import tasks_db, get_task_or_404
 
 router = APIRouter()
@@ -58,3 +58,19 @@ async def delete_task(task_id: str):
     get_task_or_404(task_id)
     del tasks_db[task_id]
     return None
+
+# Вариант 1. PATCH /tasks/{task_id} — частичное обновление
+@router.patch("/tasks/{task_id}", response_model=Task)
+async def patch_task(task_id: str, task_update: TaskPatch):
+    """Частично обновляет задачу (только переданные поля)."""
+    task = get_task_or_404(task_id)
+    
+    # exclude_unset=True берет только те поля, которые прислал клиент
+    update_data = task_update.model_dump(exclude_unset=True)
+    
+    for key, value in update_data.items():
+        setattr(task, key, value)
+        
+    task.updated_at = datetime.now()
+    tasks_db[task_id] = task
+    return task

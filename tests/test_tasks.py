@@ -174,6 +174,24 @@ def test_health_check():
 
 
 # ============================================================
+# Вариант 1. PATCH /tasks/{task_id} — частичное обновление
+# ============================================================
+
+def test_patch_task_partial_update():
+    created = client.post("/tasks", json={"title": "Старое", "priority": "low"}).json()
+    task_id = created["id"]
+    
+    response = client.patch(f"/tasks/{task_id}", json={"title": "Новое"})
+    assert response.status_code == 200
+    assert response.json()["title"] == "Новое"
+    assert response.json()["priority"] == "low"  # Приоритет не изменился!
+
+def test_patch_task_not_found():
+    response = client.patch("/tasks/nonexistent", json={"title": "Новое"})
+    assert response.status_code == 404
+
+
+# ============================================================
 # GET /tasks — список задач - начальная версия "1.Ручная разминка: напишите один тест"
 # ============================================================
 # from fastapi.testclient import TestClient
