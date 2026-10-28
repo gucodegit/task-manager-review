@@ -3,6 +3,8 @@ name: Basic CI
 on:
   push:
     branches: [ main ] 
+  pull_request:         # <-- Запуск CI при создании/обновлении PR
+    branches: [ main ]    
   workflow_dispatch:
 
 permissions:
@@ -25,13 +27,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest 'httpx<0.28' flake8 pytest-cov
+          pip install pytest 'httpx<0.28' flake8 pytest-cov bandit
 
       - name: Run linter (critical errors only)
         run: flake8 . --select=E9,F63,F7,F82 --show-source --statistics
-
-      - name: Run tests
-        run: pytest -q
       
-      - name: Check coverage
-        run: pytest --cov=. --cov-fail-under=70
+      - name: Security check with bandit  # <-- Проверка безопасности
+        run: bandit -r app/ main.py  
+
+      - name: Run tests with coverage
+        run: pytest --cov=. --cov-fail-under=70 # Тесты запускаются 1 раз, сразу с покрытием
+

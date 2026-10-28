@@ -31,4 +31,11 @@ class Task(TaskBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class TaskPatch(BaseModel):
+    """Модель для частичного обновления задачи."""
+    title: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+    is_completed: Optional[bool] = None
+    priority: Optional[Priority] = None
     
