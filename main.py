@@ -35,5 +35,7 @@ async def health_check():
 
 
 if __name__ == "__main__":
+    # Для учебного проекта и для работы в Docker `0.0.0.0` оставляем, 
+    # чтобы bandit не возвращал код ошибки 1
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)  # nosec B104
 
