@@ -1,3 +1,7 @@
+import os
+# Устанавливаем SQLite ДО импорта приложения, чтобы create_all не стучался в PostgreSQL
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
