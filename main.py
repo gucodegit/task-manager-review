@@ -1,9 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-
+from app.database import engine, Base
+# Импортируем роутер как обычно
+from sqlalchemy.orm import Session
 # Импортируем роутер
 from app.routers import tasks
+
+# Создаем таблицы в базе данных (если их нет)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Task Manager API")
 

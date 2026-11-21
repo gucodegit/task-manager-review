@@ -14,6 +14,10 @@ client = TestClient(app)
 
 def test_get_all_tasks_returns_list():
     """GET /tasks возвращает непустой список."""
+    # Сначала создадим 3 задачи
+    for i in range(3):
+        client.post("/tasks", json={"title": f"Test Task {i}"})
+        
     response = client.get("/tasks")
     assert response.status_code == 200
     assert isinstance(response.json(), list)

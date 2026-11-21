@@ -1,38 +1,37 @@
-import uuid
-from datetime import datetime
-from fastapi import HTTPException, status
-from app.models import Task
+# app/database.py
+from sqlalchemy import create_engine, Column, String, Boolean, DateTime
+# from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import sessionmaker
+import os
 
-# In-memory база данных
-tasks_db = {}
+# Получаем URL базы данных из переменной окружения (передается через docker-compose)
+# Если переменной нет, используем локальную (для запуска без Docker)
+SQLALCHEMY_DATABASE_URL = os.getenv(
+    "DATABASE_URL", 
+    "postgresql://user:password@localhost:5432/tasksdb"
+)
 
-initial_data = [
-    {"title": "Изучить FastAPI", "description": "Прочитать документацию и сделать CRUD",
-     "is_completed": False, "priority": "high"},
-    {"title": "Реализовать CRUD", "description": "Написать код для каждого эндпоинта",
-     "is_completed": False, "priority": "medium"},
-    {"title": "Написать тесты", "description": "Покрыть pytest все эндпоинты",
-     "is_completed": False, "priority": "low"},
-]
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
-# Инициализация задач
-for data in initial_data:
-    task_id = str(uuid.uuid4())
-    current_time = datetime.now()
-    new_task = Task(
-        id=task_id,
-        created_at=current_time,
-        updated_at=current_time,
-        **data
-    )
-    tasks_db[task_id] = new_task
+# Описываем таблицу для базы данных (ORM-модель)
+class DBTask(Base):
+    __tablename__ = "tasks"
 
+    id = Column(String, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    is_completed = Column(Boolean, default=False)
+    priority = Column(String, default="medium") # Храним как строку
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
 
-def get_task_or_404(task_id: str) -> Task:
-    """Возвращает задачу или выбрасывает 404."""
-    if task_id not in tasks_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Task with ID {task_id} not found"
-        )
-    return tasks_db[task_id]
+# Зависимость (Dependency) для получения сессии БД в эндпоинтах
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
