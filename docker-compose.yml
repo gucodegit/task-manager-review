@@ -2,6 +2,8 @@ services:
   db:
     image: postgres:15-alpine
     container_name: task-manager-db
+    restart: unless-stopped
+    mem_limit: 512m
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
@@ -13,17 +15,46 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   app:
     build: .
     container_name: task-manager-app
-    ports:
-      - "8000:8000"
+    restart: unless-stopped
+    mem_limit: 256m
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/tasksdb
+      - DATABASE_URL=postgresql+psycopg://user:password@db:5432/tasksdb
+    expose:
+      - "8000"
     depends_on:
       db:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx:
+    image: nginx:alpine
+    container_name: task-manager-nginx
+    restart: unless-stopped
+    mem_limit: 64m
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:
